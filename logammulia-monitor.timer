@@ -1,0 +1,11 @@
+[Unit]
+Description=Run LogamMulia Gold Stock Monitor every 15 minutes
+Requires=logammulia-monitor.service
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

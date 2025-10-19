@@ -1,0 +1,17 @@
+[Unit]
+Description=LogamMulia Gold Stock Monitor
+After=network.target
+
+[Service]
+Type=oneshot
+User=logammulia
+Group=logammulia
+WorkingDirectory=/opt/logammulia-monitor
+ExecStart=/usr/bin/python3 /opt/logammulia-monitor/stock_analyzer.py --weight 1.0 --max-branches 10
+StandardOutput=journal
+StandardError=journal
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
