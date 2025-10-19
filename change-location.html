@@ -1,0 +1,145 @@
+<div class="popup-change-location popup-general">
+  <link href="https://logammulia.com/css/add-on.min.css" rel="stylesheet" />
+
+  <h1 class="ngc-maintitle n-align-center">Ubah lokasi Butik</h1>
+  <div class="max-450 lr-auto n-align-center">
+    <p>Pilih lokasi Butik Emas Logam Mulia</p>
+  </div>
+  <!-- .max-450 -->
+
+  <br />
+
+  <div class="max-570 lr-auto">
+    <form
+      action="https://logammulia.com/do-change-location"
+      method="post"
+      enctype="multipart/form-data"
+      id="change-location"
+      autocomplete="off"
+    >
+      <div class="form-group" style="text-align: justify">
+        <br />
+        <br />
+
+        <label>Pilih lokasi Butik Emas Logam Mulia</label>
+        <div class="input-wrap has-icon">
+          <input
+            type="hidden"
+            name="_token"
+            value="MbLjKwd9seWkDMHwre1QIUPmX7Ad2GVjP7jTLGqR"
+          />
+          <select class="select2-basic" name="location" id="location">
+            <option value="ASB1">BELM - Surabaya Darmo, Surabaya</option>
+
+            <option value="ABDH">
+              BELM - Pengiriman Ekspedisi, Pulogadung Jakarta, Jakarta
+            </option>
+
+            <option value="AGDP">
+              BELM - Graha Dipta (Pengambilan Di Butik) Pulo Gadung, Jakarta
+            </option>
+
+            <option value="AJK2">
+              BELM - Gedung Antam (pengambilan Di Butik), Jakarta
+            </option>
+
+            <option value="AJK4">
+              BELM - Setiabudi One (pengambilan Di Butik), Jakarta
+            </option>
+
+            <option value="ABDG">BELM - Bandung, Bandung</option>
+
+            <option value="ASMG">BELM - Semarang, Semarang</option>
+
+            <option value="AJOG">BELM - Yogyakarta, Yogyakarta</option>
+
+            <option value="ASB2">BELM - Surabaya Pakuwon, Surabaya</option>
+
+            <option value="ADPS">BELM - Denpasar Bali, Bali</option>
+
+            <option value="ABPN">BELM - Balikpapan, Balikpapan</option>
+
+            <option value="AMKS">BELM - Makassar, Makassar</option>
+
+            <option value="AKNO">BELM - Medan, Medan</option>
+
+            <option value="APLG">BELM - Palembang, Palembang</option>
+
+            <option value="APKU">BELM - Pekanbaru, Pekanbaru</option>
+
+            <option value="ABSD">
+              BELM - Serpong (pengambilan Di Butik), Tangerang
+            </option>
+
+            <option value="BTR01">BELM - Bintaro, Tangerang Selatan</option>
+
+            <option value="BGR01">BELM - Bogor, Bogor</option>
+
+            <option value="BKS01">BELM - Bekasi, Bekasi</option>
+
+            <option value="JKT05">BELM - Juanda, Jakarta</option>
+
+            <option value="JKT06">BELM - Puri Indah, Jakarta</option>
+          </select>
+
+          <span id="location_error"></span>
+
+          <span class="fa-wrapper">
+            <span class="far fa-paper-plane icon"></span> </span
+          ><!-- .fa-wrapper -->
+        </div>
+        <!-- .input-wrap -->
+      </div>
+      <!-- .form-group -->
+
+      <input
+        type="submit"
+        class="btn btn-primary n-no-margin n-1-1per1"
+        value="SIMPAN PERUBAHAN"
+        id="change-location-button"
+      />
+    </form>
+  </div>
+  <!-- .max-570 -->
+
+  <script
+    type="text/javascript"
+    src="https://logammulia.com/js/jquery.validate.js"
+  ></script>
+  <script
+    type="text/javascript"
+    src="https://logammulia.com/js/jval.js"
+  ></script>
+
+  <script>
+    $(document).ready(function (e) {
+      // select 2 basic
+      $(".select2-basic").select2({
+        width: "100%",
+      });
+
+      // enable typing for select2 inside fancybox
+      $(document).on("focus", ".select2-search__field", function (e) {
+        e.stopPropagation();
+      });
+
+      /*
+       * Change Shop Location
+       *
+       * When user manually changes the store location, they will not be redirected
+       * to the recommended shop when page load. This, however will expire in x hours (check geoloc.js)
+       * hours based on the current time stamp and stored time stamp.
+       *
+       */
+      $("#change-location").submit(function (event) {
+        // event.preventDefault();
+        // alert('submitted');
+        var current_date = new Date().getTime();
+        localStorage.setItem("storage_loc", "true");
+        localStorage.setItem("storage_expiry", current_date);
+        // $("#change-location").submit();
+      });
+    });
+  </script>
+</div>
+<!-- .popup-change-location -->
