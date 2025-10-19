@@ -9,14 +9,44 @@ import pandas as pd
 from datetime import datetime
 from stock_checker import LogamMuliaStockChecker
 from branch_parser import BranchLocationParser
+from telegram_notifier import TelegramNotifier, load_config
 import argparse
 import time
+import os
 
 class StockAnalyzer:
-    def __init__(self):
+    def __init__(self, enable_telegram=True):
         self.stock_checker = LogamMuliaStockChecker()
         self.branch_parser = BranchLocationParser()
         self.all_stock_data = []
+        self.telegram_enabled = enable_telegram
+        self.telegram_notifier = None
+        
+        # Initialize Telegram if enabled
+        if self.telegram_enabled:
+            self.init_telegram()
+    
+    def init_telegram(self):
+        """Initialize Telegram notifier"""
+        try:
+            config = load_config()
+            if config and config.get('enable_alerts', True):
+                self.telegram_notifier = TelegramNotifier(
+                    bot_token=config['bot_token'],
+                    chat_id=config['chat_id']
+                )
+                if self.telegram_notifier.test_connection():
+                    print("📱 Telegram notifications enabled")
+                    self.telegram_enabled = True
+                else:
+                    print("⚠️ Telegram connection failed, notifications disabled")
+                    self.telegram_enabled = False
+            else:
+                print("📱 Telegram notifications disabled in config")
+                self.telegram_enabled = False
+        except Exception as e:
+            print(f"⚠️ Failed to initialize Telegram: {e}")
+            self.telegram_enabled = False
         
     def load_branches(self, location_file='change-location.html'):
         """Load branch locations"""
@@ -33,7 +63,57 @@ class StockAnalyzer:
         time.sleep(2)  # Wait for page to load
         stock_data = self.stock_checker.check_stock_availability(target_weights)
         
+        # Send Telegram alert if stock is available
+        if stock_data and self.telegram_enabled and self.telegram_notifier:
+            available_items = self.extract_available_items(stock_data, target_weights)
+            if available_items:
+                print(f"📱 Sending Telegram alert for {len(available_items)} available items at {stock_data['branch']['branch_name']}")
+                self.telegram_notifier.send_stock_alert(available_items)
+        
         return stock_data
+    
+    def extract_available_items(self, stock_data, target_weights=None):
+        """Extract available items from stock data"""
+        if not stock_data or not stock_data.get('products'):
+            return []
+        
+        available_items = []
+        branch_info = stock_data['branch']
+        
+        for product in stock_data['products']:
+            # Filter by target weights if specified
+            if target_weights and product['weight_grams'] not in target_weights:
+                continue
+            
+            # Only include available items
+            if product['is_available']:
+                available_items.append({
+                    'branch_name': branch_info['branch_name'],
+                    'city': branch_info['city'],
+                    'branch_code': branch_info['branch_code'],
+                    'weight_grams': product['weight_grams'],
+                    'price': product['price_idr'],
+                    'stock_status': product['stock_status'],
+                    'check_time': stock_data['check_time']
+                })
+        
+        return available_items
+    
+    def send_telegram_summary(self, all_results, target_weights=None):
+        """Send Telegram summary of all available items found"""
+        if not self.telegram_enabled or not self.telegram_notifier:
+            return
+        
+        all_available_items = []
+        for stock_data in all_results:
+            available_items = self.extract_available_items(stock_data, target_weights)
+            all_available_items.extend(available_items)
+        
+        if all_available_items:
+            print(f"📱 Sending Telegram summary for {len(all_available_items)} total available items")
+            self.telegram_notifier.send_stock_alert(all_available_items)
+        else:
+            print("📱 No available items found, no Telegram notification sent")
     
     def check_multiple_branches(self, branch_codes, target_weights=None):
         """Check stock for multiple branches"""
@@ -55,6 +135,10 @@ class StockAnalyzer:
                 time.sleep(delay)
         
         self.all_stock_data = results
+        
+        # Send Telegram summary of all available items found
+        self.send_telegram_summary(results, target_weights)
+        
         return results
     
     def find_product_availability(self, target_weight, max_branches=5, shipping_only=False):
@@ -296,15 +380,42 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Debug mode - show HTML detection details')
     parser.add_argument('--debug-branch', help='Debug specific branch for stock detection')
     parser.add_argument('--shipping-only', action='store_true', help='Check only shipping-capable branches (courier delivery)')
+    parser.add_argument('--no-telegram', action='store_true', help='Disable Telegram notifications')
+    parser.add_argument('--test-telegram', action='store_true', help='Test Telegram configuration and send test message')
     
     args = parser.parse_args()
     
-    analyzer = StockAnalyzer()
+    # Initialize analyzer with Telegram settings
+    analyzer = StockAnalyzer(enable_telegram=not args.no_telegram)
     
     # Load branches
     if not analyzer.load_branches():
         print("Failed to load branches")
         return 1
+    
+    if args.test_telegram:
+        if analyzer.telegram_enabled and analyzer.telegram_notifier:
+            print("🧪 Testing Telegram notifications...")
+            # Create test data
+            test_items = [
+                {
+                    'branch_name': 'Test Branch',
+                    'city': 'Test City',
+                    'branch_code': 'TEST',
+                    'weight_grams': 1.0,
+                    'price': 242800000,
+                    'stock_status': 'Available - Test',
+                    'check_time': datetime.now().isoformat()
+                }
+            ]
+            success = analyzer.telegram_notifier.send_stock_alert(test_items)
+            if success:
+                print("✅ Telegram test successful!")
+            else:
+                print("❌ Telegram test failed!")
+        else:
+            print("❌ Telegram not enabled. Check your configuration.")
+        return 0
     
     if args.debug_branch:
         # Debug specific branch
