@@ -222,7 +222,8 @@ def main():
     parser.add_argument('--debug-branch', help='Debug specific branch for stock detection')
     parser.add_argument('--shipping-only', action='store_true', help='Check only shipping-capable branches (courier delivery)')
     parser.add_argument('--no-telegram', action='store_true', help='Disable Telegram notifications')
-    parser.add_argument('--test-telegram', action='store_true', help='Test Telegram configuration and send test message')
+    parser.add_argument('--test-telegram', action='store_true', help='Test Telegram configuration and send test messages')
+    parser.add_argument('--test-error', action='store_true', help='Test Telegram error notifications')
     
     args = parser.parse_args()
     
@@ -241,7 +242,8 @@ def main():
     if args.test_telegram:
         if analyzer.telegram_enabled and analyzer.telegram_notifier:
             print("🧪 Testing Telegram notifications...")
-            # Create test data
+            
+            # Test 1: Stock alert
             test_items = [
                 {
                     'branch_name': 'Test Branch',
@@ -255,9 +257,46 @@ def main():
             ]
             success = analyzer.telegram_notifier.send_stock_alert(test_items)
             if success:
-                print("✅ Telegram test successful!")
+                print("✅ Stock alert test successful!")
             else:
-                print("❌ Telegram test failed!")
+                print("❌ Stock alert test failed!")
+            
+            # Test 2: Error notification
+            print("🧪 Testing error notifications...")
+            error_success = analyzer.telegram_notifier.send_error_notification(
+                "This is a test error message to verify error notifications are working properly",
+                "Test Error - Manual Test"
+            )
+            if error_success:
+                print("✅ Error notification test successful!")
+            else:
+                print("❌ Error notification test failed!")
+                
+        else:
+            print("❌ Telegram not enabled. Check your configuration.")
+        return 0
+    
+    if args.test_error:
+        if analyzer.telegram_enabled and analyzer.telegram_notifier:
+            print("🧪 Testing Telegram error notifications...")
+            
+            # Test different types of error scenarios
+            error_tests = [
+                ("Branch Selection Error", "Failed to select branch FAKE123 - branch might not exist or website changed"),
+                ("Scraping Error", "Failed to retrieve stock data for branch ASB1 - possible scraping detection or website issue"),
+                ("Network Error", "Connection timeout after 30 seconds - check internet connection"),
+                ("Unexpected Error", "Unknown error occurred: Website structure may have changed")
+            ]
+            
+            for i, (error_type, error_msg) in enumerate(error_tests, 1):
+                print(f"  Testing {i}: {error_type}")
+                success = analyzer.telegram_notifier.send_error_notification(error_msg, error_type)
+                if success:
+                    print(f"  ✅ {error_type} notification sent!")
+                else:
+                    print(f"  ❌ {error_type} notification failed!")
+                time.sleep(1)  # Small delay between messages
+                
         else:
             print("❌ Telegram not enabled. Check your configuration.")
         return 0
