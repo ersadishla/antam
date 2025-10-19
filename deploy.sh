@@ -85,9 +85,9 @@ print_status "Creating installation directory..."
 sudo mkdir -p $INSTALL_DIR
 
 # Copy application files
-print_status "Installing application files..."
-sudo cp -r . $INSTALL_DIR/
-sudo chown -R $SERVICE_USER:$SERVICE_USER $INSTALL_DIR
+# print_status "Installing application files..."
+# sudo cp -r . $INSTALL_DIR/
+# sudo chown -R $SERVICE_USER:$SERVICE_USER $INSTALL_DIR
 
 # Install Python dependencies
 print_status "Installing Python dependencies..."

@@ -76,8 +76,195 @@ class LogamMuliaStockChecker:
             
         except Exception:
             pass  # Continue even if these fail
+
+    def get_page_with_retry(self, url, max_retries=10):
+        """Get page with advanced anti-bot evasion techniques"""
+        
+        # Enhanced user agents with more realistic fingerprints
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0'
+        ]
+        
+        for attempt in range(max_retries):
+            try:
+                print(f"🔄 Attempt {attempt + 1}/{max_retries}")
+                
+                # Exponential backoff with jitter
+                if attempt > 0:
+                    base_delay = min(60, 5 * (2 ** (attempt - 1)))  # Cap at 60 seconds
+                    jitter = random.uniform(0.5, 1.5)
+                    delay = base_delay * jitter
+                    print(f"⏱️ Waiting {delay:.1f}s before retry...")
+                    time.sleep(delay)
+                
+                # Rotate user agent
+                user_agent = random.choice(user_agents)
+                self.session.headers['User-Agent'] = user_agent
+                
+                # Randomize other headers to look more natural
+                self.session.headers.update({
+                    'Accept': random.choice([
+                        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    ]),
+                    'Accept-Language': random.choice([
+                        'en-US,en;q=0.9,id;q=0.8',
+                        'id-ID,id;q=0.9,en;q=0.8',
+                        'en-US,en;q=0.9'
+                    ]),
+                    'Accept-Encoding': random.choice([
+                        'gzip, deflate, br',
+                        'gzip, deflate',
+                        'br'
+                    ]),
+                    'DNT': random.choice(['1', '0']),
+                    'Connection': random.choice(['keep-alive', 'close']),
+                    'Upgrade-Insecure-Requests': random.choice(['1', '0']),
+                    'Sec-Fetch-Dest': random.choice(['document', 'empty']),
+                    'Sec-Fetch-Mode': random.choice(['navigate', 'cors']),
+                    'Sec-Fetch-Site': random.choice(['none', 'same-origin', 'cross-site']),
+                    'Cache-Control': random.choice(['max-age=0', 'no-cache', 'no-store']),
+                    'Pragma': random.choice(['no-cache', ''])
+                })
+                
+                # Simulate different browser behaviors based on attempt
+                if attempt == 0:
+                    # First attempt - normal browsing
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 1:
+                    # Second attempt - simulate direct navigation
+                    self.session.headers.update({
+                        'Referer': 'https://www.google.com/',
+                        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                        'Sec-Ch-Ua-Mobile': '?0',
+                        'Sec-Ch-Ua-Platform': '"Windows"'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 2:
+                    # Third attempt - simulate coming from social media
+                    self.session.headers.update({
+                        'Referer': 'https://www.facebook.com/',
+                        'Sec-Fetch-Site': 'cross-site'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 3:
+                    # Fourth attempt - use different session
+                    self.session = requests.Session()
+                    self.setup_headers()
+                    self.session.headers['User-Agent'] = user_agent
+                    time.sleep(random.uniform(2, 4))
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 4:
+                    # Fifth attempt - simulate mobile browser
+                    mobile_agents = [
+                        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15',
+                        'Mozilla/5.0 (Linux; Android 14; SM-G991B) AppleWebKit/537.36'
+                    ]
+                    self.session.headers['User-Agent'] = random.choice(mobile_agents)
+                    self.session.headers.update({
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Sec-Ch-Ua-Mobile': '?1'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 5:
+                    # Sixth attempt - try with different TLS fingerprint
+                    self.session = requests.Session()
+                    self.setup_headers()
+                    # Add some cookies to simulate returning user
+                    self.session.cookies.update({
+                        'visited': 'true',
+                        'session_id': ''.join(random.choices('0123456789abcdef', k=32))
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 6:
+                    # Seventh attempt - longer delay with human-like behavior
+                    print("🧍 Simulating human behavior...")
+                    time.sleep(random.uniform(8, 15))
+                    # Simulate browsing to other pages first
+                    try:
+                        self.session.get("https://logammulia.com/id/about", timeout=15)
+                        time.sleep(random.uniform(2, 4))
+                        self.session.get("https://logammulia.com/id/contact", timeout=15)
+                        time.sleep(random.uniform(1, 3))
+                    except:
+                        pass
+                    response = self.session.get(url, timeout=45)
+                        
+                elif attempt == 7:
+                    # Eighth attempt - headless browser simulation
+                    self.session.headers.update({
+                        'Sec-Ch-Ua': '"Google Chrome";v="120", "Chromium";v="120", "Not_A Brand";v="24"',
+                        'Sec-Ch-Ua-Full-Version-List': '"Not_A Brand";v="24.0.0.0", "Chromium";v="120.0.6099.109", "Google Chrome";v="120.0.6099.109"',
+                        'Sec-Ch-Ua-Platform': '"Windows"',
+                        'Sec-Ch-Ua-Platform-Version': '"15.0.0"',
+                        'Sec-Ch-Ua-Wow64': '?0'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                else:
+                    # Last attempts - try alternative methods
+                    print("🔧 Trying alternative access methods...")
+                    return self.try_alternative_access(url)
+                
+                print(f"📊 Response status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    print("✅ Success! Page loaded successfully")
+                    return response
+                elif response.status_code == 403:
+                    print(f"🚫 403 Forbidden - Attempt {attempt + 1}/{max_retries}")
+                    if response.text:
+                        # Check if it's a Cloudflare or other protection
+                        if 'cloudflare' in response.text.lower():
+                            print("☁️ Cloudflare detected, trying to bypass...")
+                        elif 'captcha' in response.text.lower():
+                            print("🤖 CAPTCHA detected, switching approaches...")
+                        elif 'blocked' in response.text.lower():
+                            print("🚧 IP blocked, will try different session...")
+                            
+                elif response.status_code == 429:
+                    print("⏱️ Rate limited (429), increasing delay...")
+                    time.sleep(random.uniform(30, 60))
+                    
+                elif response.status_code in [502, 503, 504]:
+                    print("🔧 Server error, retrying with backoff...")
+                    
+                else:
+                    print(f"📊 Status code: {response.status_code}")
+                    
+            except requests.exceptions.Timeout:
+                print(f"⏰ Timeout on attempt {attempt + 1}")
+                if attempt < max_retries - 1:
+                    time.sleep(random.uniform(10, 20))
+                    
+            except requests.exceptions.ConnectionError:
+                print(f"🔌 Connection error on attempt {attempt + 1}")
+                if attempt < max_retries - 1:
+                    time.sleep(random.uniform(5, 10))
+                    
+            except Exception as e:
+                print(f"❌ Unexpected error on attempt {attempt + 1}: {e}")
+                if attempt == max_retries - 1:
+                    return None
+                    
+        print("❌ All retry attempts exhausted")
+        return None
     
-    def get_page_with_retry(self, url, max_retries=5):
+    def get_page_with_retry(self, url, max_retries=10):
         """Get page with advanced retry logic and different techniques"""
         user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -87,81 +274,283 @@ class LogamMuliaStockChecker:
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0'
         ]
         
+        # Enhanced user agents with more realistic fingerprints
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0'
+        ]
+        
         for attempt in range(max_retries):
             try:
-                # Rotate user agent
-                self.session.headers['User-Agent'] = random.choice(user_agents)
+                print(f"🔄 Attempt {attempt + 1}/{max_retries}")
                 
-                # Add random delay
+                # Exponential backoff with jitter
                 if attempt > 0:
-                    delay = random.uniform(3, 8)
-                    print(f"Retry attempt {attempt + 1}/{max_retries}, waiting {delay:.1f}s...")
+                    base_delay = min(60, 5 * (2 ** (attempt - 1)))  # Cap at 60 seconds
+                    jitter = random.uniform(0.5, 1.5)
+                    delay = base_delay * jitter
+                    print(f"⏱️ Waiting {delay:.1f}s before retry...")
                     time.sleep(delay)
                 
-                # Simulate browser behavior before request
-                if attempt > 0:
-                    self.simulate_browser_behavior()
+                # Rotate user agent
+                user_agent = random.choice(user_agents)
+                self.session.headers['User-Agent'] = user_agent
                 
-                # Make request with different approaches
+                # Randomize other headers to look more natural
+                self.session.headers.update({
+                    'Accept': random.choice([
+                        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                        'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    ]),
+                    'Accept-Language': random.choice([
+                        'en-US,en;q=0.9,id;q=0.8',
+                        'id-ID,id;q=0.9,en;q=0.8',
+                        'en-US,en;q=0.9'
+                    ]),
+                    'Accept-Encoding': random.choice([
+                        'gzip, deflate, br',
+                        'gzip, deflate',
+                        'br'
+                    ]),
+                    'DNT': random.choice(['1', '0']),
+                    'Connection': random.choice(['keep-alive', 'close']),
+                    'Upgrade-Insecure-Requests': random.choice(['1', '0']),
+                    'Sec-Fetch-Dest': random.choice(['document', 'empty']),
+                    'Sec-Fetch-Mode': random.choice(['navigate', 'cors']),
+                    'Sec-Fetch-Site': random.choice(['none', 'same-origin', 'cross-site']),
+                    'Cache-Control': random.choice(['max-age=0', 'no-cache', 'no-store']),
+                    'Pragma': random.choice(['no-cache', ''])
+                })
+                
+                # Simulate different browser behaviors based on attempt
                 if attempt == 0:
-                    # Standard approach
-                    response = self.session.get(url, timeout=30)
+                    # First attempt - normal browsing
+                    response = self.session.get(url, timeout=45)
+                    
                 elif attempt == 1:
-                    # With referer
-                    self.session.headers['Referer'] = self.base_url
-                    response = self.session.get(url, timeout=30)
+                    # Second attempt - simulate direct navigation
+                    self.session.headers.update({
+                        'Referer': 'https://www.google.com/',
+                        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                        'Sec-Ch-Ua-Mobile': '?0',
+                        'Sec-Ch-Ua-Platform': '"Windows"'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
                 elif attempt == 2:
-                    # With cache control disabled
-                    self.session.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                    self.session.headers['Pragma'] = 'no-cache'
-                    response = self.session.get(url, timeout=30)
-                else:
-                    # Reset session and try again
+                    # Third attempt - simulate coming from social media
+                    self.session.headers.update({
+                        'Referer': 'https://www.facebook.com/',
+                        'Sec-Fetch-Site': 'cross-site'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 3:
+                    # Fourth attempt - use different session
                     self.session = requests.Session()
                     self.setup_headers()
-                    self.simulate_browser_behavior()
-                    response = self.session.get(url, timeout=30)
+                    self.session.headers['User-Agent'] = user_agent
+                    time.sleep(random.uniform(2, 4))
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 4:
+                    # Fifth attempt - simulate mobile browser
+                    mobile_agents = [
+                        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15',
+                        'Mozilla/5.0 (Linux; Android 14; SM-G991B) AppleWebKit/537.36'
+                    ]
+                    self.session.headers['User-Agent'] = random.choice(mobile_agents)
+                    self.session.headers.update({
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Sec-Ch-Ua-Mobile': '?1'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 5:
+                    # Sixth attempt - try with different TLS fingerprint
+                    self.session = requests.Session()
+                    self.setup_headers()
+                    # Add some cookies to simulate returning user
+                    self.session.cookies.update({
+                        'visited': 'true',
+                        'session_id': ''.join(random.choices('0123456789abcdef', k=32))
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                elif attempt == 6:
+                    # Seventh attempt - longer delay with human-like behavior
+                    print("🧍 Simulating human behavior...")
+                    time.sleep(random.uniform(8, 15))
+                    # Simulate browsing to other pages first
+                    try:
+                        self.session.get("https://logammulia.com/id/about", timeout=15)
+                        time.sleep(random.uniform(2, 4))
+                        self.session.get("https://logammulia.com/id/contact", timeout=15)
+                        time.sleep(random.uniform(1, 3))
+                    except:
+                        pass
+                    response = self.session.get(url, timeout=45)
+                        
+                elif attempt == 7:
+                    # Eighth attempt - headless browser simulation
+                    self.session.headers.update({
+                        'Sec-Ch-Ua': '"Google Chrome";v="120", "Chromium";v="120", "Not_A Brand";v="24"',
+                        'Sec-Ch-Ua-Full-Version-List': '"Not_A Brand";v="24.0.0.0", "Chromium";v="120.0.6099.109", "Google Chrome";v="120.0.6099.109"',
+                        'Sec-Ch-Ua-Platform': '"Windows"',
+                        'Sec-Ch-Ua-Platform-Version': '"15.0.0"',
+                        'Sec-Ch-Ua-Wow64': '?0'
+                    })
+                    response = self.session.get(url, timeout=45)
+                    
+                else:
+                    # Last attempts - try alternative methods
+                    print("🔧 Trying alternative access methods...")
+                    return self.try_alternative_access(url)
                 
-                print(f"Response status: {response.status_code}")
+                print(f"📊 Response status: {response.status_code}")
                 
                 if response.status_code == 200:
+                    print("✅ Success! Page loaded successfully")
                     return response
                 elif response.status_code == 403:
-                    print(f"403 Forbidden - Attempt {attempt + 1}/{max_retries}")
-                    if attempt == max_retries - 1:
-                        print("Max retries reached. Trying alternative approach...")
-                        # Try to access with a different session
-                        return self.try_alternative_access(url)
-                else:
-                    print(f"Status code: {response.status_code}")
+                    print(f"🚫 403 Forbidden - Attempt {attempt + 1}/{max_retries}")
+                    if response.text:
+                        # Check if it's a Cloudflare or other protection
+                        if 'cloudflare' in response.text.lower():
+                            print("☁️ Cloudflare detected, trying to bypass...")
+                        elif 'captcha' in response.text.lower():
+                            print("🤖 CAPTCHA detected, switching approaches...")
+                        elif 'blocked' in response.text.lower():
+                            print("🚧 IP blocked, will try different session...")
+                            
+                elif response.status_code == 429:
+                    print("⏱️ Rate limited (429), increasing delay...")
+                    time.sleep(random.uniform(30, 60))
                     
-            except requests.RequestException as e:
-                print(f"Request failed: {e}")
+                elif response.status_code in [502, 503, 504]:
+                    print("🔧 Server error, retrying with backoff...")
+                    
+                else:
+                    print(f"📊 Status code: {response.status_code}")
+                    
+            except requests.exceptions.Timeout:
+                print(f"⏰ Timeout on attempt {attempt + 1}")
+                if attempt < max_retries - 1:
+                    time.sleep(random.uniform(10, 20))
+                    
+            except requests.exceptions.ConnectionError:
+                print(f"🔌 Connection error on attempt {attempt + 1}")
+                if attempt < max_retries - 1:
+                    time.sleep(random.uniform(5, 10))
+                    
+            except Exception as e:
+                print(f"❌ Unexpected error on attempt {attempt + 1}: {e}")
                 if attempt == max_retries - 1:
                     return None
                     
+        print("❌ All retry attempts exhausted")
         return None
     
     def try_alternative_access(self, url):
-        """Try alternative access methods"""
-        try:
-            # Try using requests without session
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive'
+        """Try enhanced alternative access methods"""
+        alternative_methods = [
+            # Method 1: Direct request with minimal headers
+            {
+                'name': 'Minimal headers',
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8'
+                },
+                'timeout': 60
+            },
+            # Method 2: Safari user agent
+            {
+                'name': 'Safari browser',
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br'
+                },
+                'timeout': 45
+            },
+            # Method 3: Edge browser
+            {
+                'name': 'Edge browser',
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Referer': 'https://www.bing.com/'
+                },
+                'timeout': 50
+            },
+            # Method 4: Mobile simulation
+            {
+                'name': 'Mobile device',
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9'
+                },
+                'timeout': 40
             }
-            
-            response = requests.get(url, headers=headers, timeout=30)
-            if response.status_code == 200:
-                print("Alternative access successful!")
-                return response
+        ]
+        
+        for method in alternative_methods:
+            try:
+                print(f"🔧 Trying alternative method: {method['name']}")
                 
-        except Exception as e:
-            print(f"Alternative access failed: {e}")
-            
+                # Clear any existing session
+                temp_session = requests.Session()
+                
+                # Add random delay to seem more human
+                time.sleep(random.uniform(2, 5))
+                
+                response = temp_session.get(
+                    url, 
+                    headers=method['headers'], 
+                    timeout=method['timeout'],
+                    allow_redirects=True
+                )
+                
+                print(f"📊 {method['name']} response: {response.status_code}")
+                
+                if response.status_code == 200:
+                    print(f"✅ Alternative access successful with {method['name']}!")
+                    # Update the main session with successful headers
+                    self.session = temp_session
+                    return response
+                    
+                elif response.status_code == 403:
+                    print(f"🚫 {method['name']} blocked (403)")
+                    continue
+                    
+                else:
+                    print(f"📊 {method['name']} failed with status {response.status_code}")
+                    continue
+                    
+            except requests.exceptions.Timeout:
+                print(f"⏰ {method['name']} timeout")
+                continue
+                
+            except requests.exceptions.ConnectionError:
+                print(f"🔌 {method['name']} connection error")
+                continue
+                
+            except Exception as e:
+                print(f"❌ {method['name']} failed: {e}")
+                continue
+        
+        print("❌ All alternative methods failed")
         return None
     
     def select_branch(self, branch_code):
